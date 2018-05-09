@@ -1,29 +1,21 @@
 
-let query = { 'tag': 'photofeed', 'limit': 7 }
+const USERNAME = 'sambillingham';
+const TAG = 'steepshot'
+let query = { 'tag': TAG, 'limit': 7 }
 let converter = new showdown.Converter({ tables: true })
 let allContent = []
 let allUsers = []
 let msnry;
 let $gallery = $('.gallery')
-let params, photographer;
 
 if ( $('main').hasClass('feeds') ) {
-  getFeatured(query, true)
-}
-
-if ( $('main').hasClass('photographers') ) {
-  getPhotographers()
+  getLatest(query, true)
 }
 
 if ( $('main').hasClass('profile') ) {
-  params = (new URL(document.location)).searchParams;
-  photographer = params.get('photographer');
-  $('.nav__link--active').text(`Photos by @${photographer}`)
-  $('.nav__link--active').attr('href', `https://steemit.com/@${photographer}`)
-  query = { 'tag': photographer, 'limit': 14 }
+  query = { 'tag': USERNAME, 'limit': 14 }
   getBlog(query, true)
 }
-
 
 $('.gallery').on('click', '.item', (e) => {
     loadPost(e.currentTarget)
@@ -45,8 +37,6 @@ $('.nav__link').on('click', (e) => {
 
   if(filter === 'trending'){
     getTrending(query, true)
-  } else if (filter === 'featured') {
-    getFeatured(query, true)
   } else {
     getLatest(query, true)
   }
@@ -55,80 +45,8 @@ $('.nav__link').on('click', (e) => {
 $('.overlay__bg').on('click', () => {
   $('body').removeClass('noscroll')
   $(window).scrollTop( lastTop );
-  $('.overlay, .overlay__bg, .overlay__content, .overlay__faq .overlay__photographers').removeClass('overlay--active')
+  $('.overlay, .overlay__bg, .overlay__content, .overlay__faq').removeClass('overlay--active')
 })
-
-function getPhotographers(){
-  $.ajax({
-    url: 'https://photofeed-photographers-ourxcnqzhl.now.sh/',
-    type: "GET",
-    dataType: "json",
-    success: function (data) {
-        displayPhotogaphers(data.result)
-    },
-    error: function () {
-        console.log("error");
-    }
-});
-}
-
-function displayPhotogaphers(photographers){
-
-  photographers.sort((a, b) => {
-    if (a.featured > b.featured ) {
-      return -1;
-    } else if (a.featured < b.featured) {
-      return 1;
-    } else {
-      return 0;
-    }
-  });
-  photographers.shift()
-
-  for (var i = 0; i < 8; i++) {
-    appendPhotogapher(photographers[i], '.photogaphers__top')
-  }
-  for (var i = 8; i < photographers.length; i++) {
-    appendPhotogapher(photographers[i], '.photogaphers__all')
-  }
-}
-
-function appendPhotogapher(photogapher, location) {
-  let template = `<div class="photogapher__single cf">
-    <a href="profile.html?photographer=${photogapher.username}">
-    <img class="photogapher__avatar" src="${photogapher.avatar}" onerror="this.onerror=null;this.src='http://placehold.it/50x50?text=?';">
-    <div class="photogapher__info">
-      <h3 class="photogapher__username" >@${photogapher.username}</h3>
-      <h3 class="photogapher__posts" >Total Posts: ${photogapher.posts}</h3>
-      <h3 class="photogapher__featured" >Featured: ${photogapher.featured}</h3>
-    </div>
-    <div class="photogapher__link">
-      <svg x="0px" y="0px" viewBox="0 0 50 50" style="enable-background:new 0 0 50 50;">
-      <g transform="translate(0,-952.36218)">
-      <path class="st0" d="M10.5,961.6l19.9,15.3c0.3,0.3,0.3,0.7,0,1l-19.9,15.3c-0.1,0.1-0.3,0.1-0.5,0.1c-0.2,0-0.3-0.1-0.4-0.2
-      c-0.1-0.1-0.1-0.3-0.1-0.5c0-0.2,0.1-0.3,0.2-0.4L29,977.3L9.7,962.6C9,962,9.8,961,10.5,961.6L10.5,961.6z"/>
-      <path class="st0" d="M10.5,954l29.8,22.9c0.3,0.3,0.3,0.7,0,1l-29.8,22.9c-0.7,0.5-1.5-0.4-0.8-1l29.2-22.4L9.7,955
-      C9.1,954.4,9.9,953.5,10.5,954z"/>
-      </g>
-      </svg>
-    </div>
-    </a>
-  </div>`
-  $(location).append(template)
-}
-
-
-function getFeatured(query, initial, callback){
-  steem.api.getDiscussionsByBlog(query, (err, result) => {
-    const featuredPosts = result.filter( post => post.author !== 'photofeed')
-    if (err === null) {
-      displayImages(featuredPosts, initial, initial ? false : callback)
-      getaccounts(result.map(post => post.author))
-    } else {
-      console.log(err);
-    }
-  });
-}
 
 function getTrending(query, initial, callback){
 
@@ -159,7 +77,8 @@ function getBlog(query, initial, callback){
     if (err === null) {
       result = result.filter(post => {
         let tags = JSON.parse(post.json_metadata).tags
-        if( tags.includes('photofeed') ) return post
+        console.log(post)
+        if( tags.includes(TAG) || post.parent_permlink === TAG ) return post
       })
       displayImages(result, initial, initial ? false : callback)
       getaccounts(result.map(post => post.author))
@@ -194,14 +113,12 @@ function getMoreContent(){
 
       if(filter === 'trending'){
         getTrending(query, false, callback)
-      } else if (filter === 'featured') {
-        getFeatured(query, false, callback)
       } else if (filter === 'latest')  {
         getLatest(query, false, callback)
       } else {
         query = {
             'tag':
-            photographer,
+            USERNAME,
             'limit': 24,
             start_author: lastItem.author,
             start_permlink: lastItem.permlink }
