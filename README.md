@@ -1,3 +1,3 @@
 # yourfeed.steem
 
-Showcase photo feeds for STEEM hastags and Steem profiles ✌️
+Showcase photo feeds for STEEM hashtags and Steem profiles ✌️
